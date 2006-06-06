@@ -1,0 +1,15 @@
+Revision history for Perl extension CCCheck
+
+0.04  Tue Jun  6 16:07:03 PDT 2006
+	add EXPORT_TAG :all
+
+0.03  Mon Apr 30 13:23:03 PDT 2001
+	correct defective CC recognition for MC and Diners/Carte Blanche
+
+0.02  Thu Apr 19 11:11:51 PDT 2001
+	allow for calls to functions with undefined arguments.
+	add CC_expired check
+
+0.01  Mon Feb 26 16:00:45 PST 2001
+	initial release
+
