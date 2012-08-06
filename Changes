@@ -1,5 +1,8 @@
 Revision history for Perl extension CCCheck
 
+0.05 Mon Aug  6 07:02:33 PDT 2012
+	correct type in old distro
+
 0.04  Tue Jun  6 16:07:03 PDT 2006
 	add EXPORT_TAG :all
 

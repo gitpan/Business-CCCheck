@@ -7,7 +7,7 @@ use strict;
 use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS @CC_months);
 require Exporter;
 @ISA = qw(Exporter);
-$VERSION = do { my @r = (q$Revision: 0.04 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+$VERSION = do { my @r = (q$Revision: 0.05 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 @EXPORT_OK = qw(
 	@CC_months
@@ -168,11 +168,11 @@ __END__
 
 =head1 NAME
 
-  BZS::CCCheck - Credit Card Check numbers
+  Business::CCCheck - Credit Card Check numbers
 
 =head1 SYNOPSIS
 
-  use BZS::CCCheck qw(
+  use Business::CCCheck qw(
 	@CC_months
 	CC_year
 	CC_expired
