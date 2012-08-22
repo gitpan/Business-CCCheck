@@ -1,18 +1,22 @@
-Revision history for Perl extension CCCheck
+Revision history for Perl extension Business::CCCheck
 
-0.05 Mon Aug  6 07:02:33 PDT 2012
-	correct type in old distro
+0.06 ????-??-??
+    - Reformatted this file (Changes) according to CPAN::Spec::Changes
+    - moved CCCheck.pm into lib/Business/
 
-0.04  Tue Jun  6 16:07:03 PDT 2006
-	add EXPORT_TAG :all
+0.05 2012-08-06
+    - correct type in old distro
 
-0.03  Mon Apr 30 13:23:03 PDT 2001
-	correct defective CC recognition for MC and Diners/Carte Blanche
+0.04 2006-06-06
+    - add EXPORT_TAG :all
 
-0.02  Thu Apr 19 11:11:51 PDT 2001
-	allow for calls to functions with undefined arguments.
-	add CC_expired check
+0.03  2001-04-30
+    - correct defective CC recognition for MC and Diners/Carte Blanche
 
-0.01  Mon Feb 26 16:00:45 PST 2001
-	initial release
+0.02 2001-04-19
+	- allow for calls to functions with undefined arguments.
+	- add CC_expired check
+
+0.01 2001-02-26
+    - initial release
 

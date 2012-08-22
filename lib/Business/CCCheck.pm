@@ -1,30 +1,37 @@
 package Business::CCCheck;
 
-#require 5.005_62;
 use strict;
-#use diagnostics;
-#use warnings;
+use warnings;
+
+our $VERSION = '0.05_01';
+
+use Business::CCCheck::CardID;
+
 use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS @CC_months);
 require Exporter;
-@ISA = qw(Exporter);
-$VERSION = do { my @r = (q$Revision: 0.05 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our @ISA = qw(Exporter);
 
-@EXPORT_OK = qw(
-	@CC_months
-	CC_clean
-	CC_digits
-	CC_format
-	CC_year
-	CC_gen_date
-	CC_is_name
-	CC_is_addr
-	CC_is_zip
-	CC_expired
-);
+our @EXPORT_OK = qw(
+                    @CC_months
+                    CC_clean
+                    CC_digits
+                    CC_format
+                    CC_year
+                    CC_gen_date
+                    CC_is_name
+                    CC_is_addr
+                    CC_is_zip
+                    CC_expired
+                    CC_oldtype
+                    CC_parity
+                    CC_typGeneric
+                    CC_typDetail
+                    CC_luhn_valid
+                   );
 
-%EXPORT_TAGS = (
-	all	=> [@EXPORT_OK],
-);
+our %EXPORT_TAGS = (
+                    all	=> [@EXPORT_OK],
+                   );
 
 @CC_months = ('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
 
@@ -103,7 +110,23 @@ sub CC_clean {
   return ( $ccn =~ /\D/ ) ? '' : $ccn;
 }
 
+#sub CC_id {
+#  my ($ccn) = @_;
+
 sub CC_digits {
+  my ($ccn) = @_;
+  my $type = &CC_oldtype;
+  return $type unless $type;
+  return (CC_parity($ccn)) ? $type : '';
+}  
+
+sub _is_enRoute {
+  my ($ccn) = @_;
+  return ( grep { $ccn =~ /^$_/ } keys %enRoute ) ?
+	'enRoute' : '';
+}
+
+sub CC_oldtype {
   my ($ccn) = @_;
   return '' unless $ccn;
   my $i = length($ccn);
@@ -136,10 +159,8 @@ sub CC_digits {
     (	$ccn =~ /^6011/ ) {
     $type = 'Discover' if $i == 16;
   } elsif
-    (	$ccn =~ /^2014/ ||
-	$ccn =~ /^2149/ ) {
-    $type = 'enRoute';
-    return $type;		# early exit
+    (_is_enRoute($ccn)) {
+    return 'enRoute';		# early exit, type = 'enRoute'
   } elsif
     (	$ccn =~ /^3/ ) {
     $type = 'JCB' if $i == 16;
@@ -148,27 +169,38 @@ sub CC_digits {
 	$ccn =~ /^1800/ ) {
     $type = 'JCB' if $i == 15;
   }
-  return $type unless $type;
-
-  my @ccn = split('',$ccn);
-  my $even = 0;
-  $ccn = 0;
-  for($i=$#ccn;$i >=0;--$i) {
-    $ccn[$i] *= 2 if $even;
-    $ccn -= 9 if $ccn[$i] > 9;
-    $ccn += $ccn[$i];
-    $even = ! $even;
-  }
-  $type = '' if $ccn % 10;
   return $type;
 }
 
-1;
-__END__
+sub CC_parity {
+  my ($ccn) = @_;
+  return '' unless $ccn;
+
+  # no parity check for enRoute
+  return 1 if _is_enRoute($ccn);
+
+  return CC_luhn_valid($ccn);
+}
+
+sub CC_luhn_valid
+{
+    my $ccn = shift;
+    my @ccn = split('', $ccn);
+    my $even = 0;
+
+    $ccn = 0;
+    for (my $i=$#ccn; $i >=0; --$i) {
+        $ccn[$i] *= 2 if $even;
+        $ccn -= 9 if $ccn[$i] > 9;
+        $ccn += $ccn[$i];
+        $even = ! $even;
+    }
+    return ($ccn % 10) == 0;
+}
 
 =head1 NAME
 
-  Business::CCCheck - Credit Card Check numbers
+Business::CCCheck - collection of functions for checking credit card numbers
 
 =head1 SYNOPSIS
 
@@ -181,6 +213,10 @@ __END__
 	CC_is_addr
 	CC_clean
 	CC_digits
+	CC_oldtype
+	CC_parity
+	CC_typGeneric
+	CC_typDetail
 	CC_format
   );
 
@@ -238,6 +274,77 @@ identifying the card issuer that is one of:
     Discover
     enRoute
     JCB
+
+Checks number of digits in card number.
+
+=item $scalar = CC_oldtype($credit_card_number);
+
+Performs the number -> name conversion for CC_digits and checks number of
+digits in card number.
+
+returns false if it can not convert.
+
+=item $scalar = CC_parity($credit_card_number);
+
+Performs a credit card number parity check for CC_digits.
+This is the same as C<CC_luhn_valid()>, apart from for 'enRoute' cards,
+which do not have a check digit. For 'enRoute' cards C<CC_parity()>
+always returns true.
+
+=item $scalar = CC_luhn_valid($credit_card_number);
+
+Performs a strict LUHN check on a credit card number,
+and returns true if the number has a valid check digit,
+false otherwise.
+
+=back
+
+=cut
+
+# generic id of credit card number
+#
+# input:	credit card number,
+#		pointer to hash of card prefix's => description
+# returns:	description or 'false'
+#
+sub _typeCheck {
+  my ($ccn,$hp) = @_;
+#  return '' unless CC_parity($ccn);
+  foreach my $key ( sort { $b cmp $a } keys %{$hp} ) {
+#print "$key\t=> $hp->{$key}\n";
+    if ($ccn =~ /^$key/) {
+      return $hp->{$key};
+    }
+  }
+  return '';
+}
+
+sub CC_typGeneric {
+  my($ccn) = @_;
+  return '' unless $ccn;
+  my %generic = (%enRoute,%CCprimary);
+  return _typeCheck($ccn,\%generic);
+}
+
+sub CC_typDetail {
+  my ($ccn) = @_;
+  return '' unless $ccn;
+  my %detail = (%enRoute,%CCprimary,%CCsecondary);
+  return _typeCheck($ccn,\%detail);
+}
+
+=item $scalar = CC_typGeneric(credit_card_number);
+
+Returns a text string describing the type of credit card or 'false' if no
+indentification can be made. Checks if type is in '%enRoute' or
+'%CCprimary', similar to B<Card Types> below.
+
+Does NOT check the number of digits in the card number.
+
+=item $scalar = CC_typDetail(credit_card_number);
+
+Returns detailed description of card type as it appears in %CCsecondary,
+%CCprimary, %enRoute... or 'false' if the card number can not be identified.
 
 =item $scalar = CC_format(credit_card_number);
 
@@ -328,7 +435,7 @@ Validation criteria are:
       2. number of digits
       3. mod10  (for all but enRoute which uses only 1 & 2)
 
- ... according to the following list of criteria requirements:
+ ... according to the following list of example criteria:
 
     Card Type		Prefix		 Length  Check-Digit Algoritm
 
@@ -353,6 +460,10 @@ Validation criteria are:
 	@CC_months
 	CC_clean
 	CC_digits
+	CC_oldtype
+	CC_parity
+	CC_typGeneric
+	CC_typDetail
 	CC_format
 	CC_year
 	CC_gen_date
@@ -364,13 +475,14 @@ Validation criteria are:
 
 =head1 COPYRIGHT
 
-Copyright 2001 - 2006, Michael Robinton <michael@bizsystems.com>
+Copyright 2001 - 2011, Michael Robinton E<lt>michael@bizsystems.comE<gt>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License (except as noted
 otherwise in individuals sub modules)  published by
 the Free Software Foundation; either version 2 of the License, or 
-(at your option) any later version.
+(at your option) any later version, a copy of which is included with this
+distribution in the file "GPL".
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of 
@@ -383,7 +495,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 =head1 AUTHOR
 
-Michael Robinton, <michael@bizsystems.com>
+Michael Robinton, E<lt>michael@bizsystems.comE<gt>
 
 =cut
 

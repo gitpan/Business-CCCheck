@@ -1,6 +1,10 @@
-CCCheck.pm
-Changes
+Changes	
 MANIFEST
 Makefile.PL
+lib/Business/CCCheck.pm
+lib/Business/CCCheck/CardID.pm
 t/all.t
-META.yml                                 Module meta-data (added by MakeMaker)
+t/cardtype.t
+t/old_parity.t
+META.yml                                 Module YAML meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)
