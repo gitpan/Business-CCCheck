@@ -6,6 +6,11 @@
 
 package Business::CCCheck::CardID;
 
+use strict;
+use warnings;
+
+our $VERSION = '0.07';
+
 use vars qw(
 	@ISA
 	@EXPORT
@@ -1580,11 +1585,9 @@ The 'secondary' hash will include some issuers not covered in 'primary'.
 
 Michael Robinton, E<lt>michael@bizsystems.comE<gt>
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
 Copyright 2012, Michael Robinton E<lt>michael@bizsystems.comE<gt>
-
-=head1 LICENSE
 
 This module is licensed under the "Creative Commons Attribution-ShareAlike
 3.0 Unported License", a copy of which can be found in the file
